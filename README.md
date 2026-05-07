@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# Keyword Checker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Невеликий вебінструмент для перевірки наявності і кількості ключових слів у тексті.
 
-Currently, two official plugins are available:
+## Use case
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Вставити текст (1000–7000 слів).
+2. Вставити список ключових слів — по одному на рядок. Опційно вказати очікувану кількість входжень через `-`, `:` або просто пробіл:
 
-## React Compiler
+   ```
+   kayaking tour - 3
+   hiking: 2
+   fishing 5
+   whitewater rafting
+   ```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Натиснути `Перевірити`. Побачити які ключі відсутні і яких забагато.
 
-## Expanding the ESLint configuration
+**Правила:**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Без вказаної кількості: ключ має зустрічатись 1 або 2 рази (інакше missing/excess).
+- З вказаною кількістю N: рівно N (інакше missing/excess).
+- Пошук case-insensitive, по межах слова, з підтримкою кирилиці.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Local development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev            # dev server
+npm run test           # vitest watch mode
+npm run test:run       # one-shot
+npm run test:coverage  # coverage report (≥90% on src/lib/)
+npm run build          # production build
+npm run preview        # preview production build
+npm run lint
+npm run format
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Deploy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Push to GitHub → import у Vercel → автодетект Vite. Жодних env vars не потрібно.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Architecture
+
+- Pure frontend SPA: Vite + React 19 + TypeScript + Tailwind.
+- Бізнес-логіка ізольована у `src/lib/` з повним unit-coverage.
+- UI у `src/components/`.
+
+Дизайн-спека: `docs/specs/2026-05-07-keyword-checker-design.md`
+План реалізації: `docs/plans/2026-05-07-keyword-checker.md`
