@@ -1,7 +1,6 @@
 import type { KeywordResult, ParsedKeyword } from './types';
 
 const REGEX_SPECIAL = /[.*+?^${}()|[\]\\]/g;
-const UNDEFINED_EXCESS_THRESHOLD = 2;
 
 function escapeRegex(input: string): string {
   return input.replace(REGEX_SPECIAL, '\\$&');
@@ -21,18 +20,11 @@ function countMatches(text: string, regex: RegExp): number {
 
 function classify(
   actual: number,
-  requiredCount: number | undefined,
+  min: number,
+  max: number,
 ): { status: KeywordResult['status']; delta: number } {
-  if (requiredCount === undefined) {
-    if (actual === 0) return { status: 'missing', delta: 1 };
-    if (actual > UNDEFINED_EXCESS_THRESHOLD) {
-      return { status: 'excess', delta: actual - UNDEFINED_EXCESS_THRESHOLD };
-    }
-    return { status: 'ok', delta: 0 };
-  }
-
-  if (actual < requiredCount) return { status: 'missing', delta: requiredCount - actual };
-  if (actual > requiredCount) return { status: 'excess', delta: actual - requiredCount };
+  if (actual < min) return { status: 'missing', delta: min - actual };
+  if (actual > max) return { status: 'excess', delta: actual - max };
   return { status: 'ok', delta: 0 };
 }
 
@@ -41,10 +33,11 @@ export function checkKeywords(rawText: string, keywords: ParsedKeyword[]): Keywo
   return keywords.map((kw) => {
     const regex = buildKeywordRegex(kw.keyword);
     const actualCount = countMatches(text, regex);
-    const { status, delta } = classify(actualCount, kw.requiredCount);
+    const { status, delta } = classify(actualCount, kw.requiredMin, kw.requiredMax);
     return {
       keyword: kw.keyword,
-      requiredCount: kw.requiredCount,
+      requiredMin: kw.requiredMin,
+      requiredMax: kw.requiredMax,
       actualCount,
       status,
       delta,

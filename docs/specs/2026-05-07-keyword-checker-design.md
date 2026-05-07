@@ -15,24 +15,36 @@
 ### 2.1 Inputs
 
 - **Text** — довільний текст, типово 1000–7000 слів. Підтримка будь-якої мови (Latin / Cyrillic / mixed).
-- **Keywords** — список ключових слів, по одному в рядку. Кожен рядок може містити необов'язкову очікувану кількість входжень, відокремлену від ключа одним з: ` - `, `:` або просто пробілом.
+- **Keywords** — список ключових слів, по одному в рядку. Кожен рядок може містити необов'язкову вимогу до кількості входжень: точне число або діапазон `N-M`. Роздільниками між словом і числом можуть бути ` - `, `:` або просто пробіл.
 
   Приклади валідних рядків:
   ```
-  kayaking tour - 3
-  hiking: 2
-  fishing 5
-  whitewater rafting
-  туризм - 4
+  kayaking tour - 3        # рівно 3 входження
+  hiking: 2                # рівно 2 входження
+  fishing 5                # рівно 5 входжень
+  bonus code 5-10          # від 5 до 10 входжень (діапазон)
+  bonus code: 5-10         # те саме з явним роздільником
+  whitewater rafting       # default: 1–2 входження
+  туризм - 4               # рівно 4 входження
   ```
 
-  Правило парсингу:
-  1. Спочатку шукається явний роздільник `-` або `:` + ціле число → `keyword`, `requiredCount`.
-  2. Якщо не знайдено — trailing number після пробілу.
-  3. Інакше — весь рядок є ключем, `requiredCount = undefined`.
-  4. Дублікати дедуплікуються; береться максимальний `requiredCount`.
+  Внутрішня модель: кожен ключ має `[requiredMin, requiredMax]` window. Mapping з вводу:
+  | Ввід | requiredMin | requiredMax |
+  |---|---|---|
+  | `word` | 1 | 2 |
+  | `word - N` / `word: N` / `word N` | N | N |
+  | `word - N-M` / `word: N-M` / `word N-M` | min(N,M) | max(N,M) |
 
-  Trade-off: рядок типу `channel 5` буде розпарсений як `keyword="channel", count=5`. У SEO-домені це рідкісна проблема; для уникнення можна писати без count або з явним роздільником.
+  Правило парсингу (порядок важливий — від найбільш специфічного до найзагальнішого):
+  1. Range з явним роздільником: `word [-:] N-M`
+  2. Range з пробілом: `word N-M`
+  3. Exact count з явним роздільником: `word [-:] N`
+  4. Exact count з пробілом: `word N`
+  5. Інакше — весь рядок є ключем з default-діапазоном.
+
+  Дублікати дедуплікуються case-insensitive; виграє запис з найбільшим `requiredMax`.
+
+  Trade-off: рядок типу `channel 5` буде розпарсений як `keyword="channel"`, exact 5. У SEO-домені це рідкісна проблема; для уникнення можна писати з явним роздільником або не писати число.
 
 ### 2.2 Matching Rules
 
@@ -46,21 +58,25 @@
 
 ### 2.3 Classification
 
-| `requiredCount` | `missing` | `excess` | `ok` |
-|---|---|---|---|
-| `undefined` | `actual === 0` | `actual > 2` | `actual ∈ {1, 2}` |
-| `N` | `actual < N` | `actual > N` | `actual === N` |
+Уніфікована логіка для всіх вхідних форматів — оперує `[requiredMin, requiredMax]`:
 
-`delta`:
-- Для `missing`: `delta = (requiredCount ?? 1) - actual` (скільки ще треба).
-- Для `excess` коли вказано `requiredCount`: `delta = actual - requiredCount`.
-- Для `excess` коли `requiredCount` не вказано: `delta = actual - 2` (на скільки перевищено допустиму верхню межу 2).
+| Умова | Status | Delta |
+|---|---|---|
+| `actual < requiredMin` | `missing` | `requiredMin - actual` |
+| `actual > requiredMax` | `excess` | `actual - requiredMax` |
+| `requiredMin ≤ actual ≤ requiredMax` | `ok` | `0` |
+
+Тобто всі правила зводяться до однієї перевірки на діапазон. Default `[1, 2]` і exact `[N, N]` — це окремі випадки range-логіки.
 
 ### 2.4 Output
 
 UI показує дві колонки:
-- **Не вистачає** (sorted by delta DESC) — кожен запис: ключ, текст `треба ще {delta}`, лічильник у дужках `({actualCount}/{requiredCount ?? 1})`.
-- **Забагато** (sorted by delta DESC) — кожен запис: ключ, текст `на {delta} більше`, лічильник у дужках `({actualCount}/{requiredCount ?? 2})` — у знаменнику `2` коли count не вказано (це верхня допустима межа).
+- **Не вистачає** (sorted by delta DESC) — кожен запис: ключ, текст `треба ще {delta}`, лічильник `({actualCount}/{expected})`.
+- **Забагато** (sorted by delta DESC) — кожен запис: ключ, текст `на {delta} більше`, лічильник `({actualCount}/{expected})`.
+
+Формат `{expected}`:
+- Якщо `requiredMin === requiredMax` → `{requiredMin}` (наприклад `5`).
+- Якщо `requiredMin !== requiredMax` → `{requiredMin}-{requiredMax}` (наприклад `1-2` для default або `5-10` для діапазону).
 
 Внизу: `✓ N ключів у нормі`. Над панеллю — timestamp останньої перевірки.
 
@@ -125,12 +141,14 @@ keyword-checker/
 ```typescript
 export type ParsedKeyword = {
   keyword: string;
-  requiredCount?: number;
+  requiredMin: number;
+  requiredMax: number;
 };
 
 export type KeywordResult = {
   keyword: string;
-  requiredCount?: number;
+  requiredMin: number;
+  requiredMax: number;
   actualCount: number;
   status: 'ok' | 'missing' | 'excess';
   delta: number;

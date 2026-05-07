@@ -10,9 +10,13 @@ function formatLabel(result: KeywordResult): string {
   return '';
 }
 
+function formatExpected(result: KeywordResult): string {
+  if (result.requiredMin === result.requiredMax) return `${result.requiredMin}`;
+  return `${result.requiredMin}-${result.requiredMax}`;
+}
+
 function formatCounter(result: KeywordResult): string {
-  const denominator = result.requiredCount ?? (result.status === 'excess' ? 2 : 1);
-  return `${result.actualCount}/${denominator}`;
+  return `${result.actualCount}/${formatExpected(result)}`;
 }
 
 export function KeywordResultRow({ result }: KeywordResultRowProps) {

@@ -1,13 +1,15 @@
 export type ParsedKeyword = {
   keyword: string;
-  requiredCount?: number;
+  requiredMin: number;
+  requiredMax: number;
 };
 
 export type KeywordStatus = 'ok' | 'missing' | 'excess';
 
 export type KeywordResult = {
   keyword: string;
-  requiredCount?: number;
+  requiredMin: number;
+  requiredMax: number;
   actualCount: number;
   status: KeywordStatus;
   delta: number;

@@ -23,15 +23,17 @@ export function KeywordsInputArea({ value, onChange, onSubmit }: KeywordsInputAr
         onKeyDown={(e) => {
           if (e.ctrlKey && e.key === 'Enter' && onSubmit) onSubmit();
         }}
-        placeholder={'kayaking tour - 3\nhiking: 2\nfishing 5\nwhitewater rafting'}
+        placeholder={'kayaking tour - 3\nhiking: 2\nfishing 5\nbonus code 5-10\nwhitewater rafting'}
         className="min-h-[400px] resize-y rounded-lg border border-slate-300 bg-white p-3 font-mono text-sm text-slate-900 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
       />
       <div className="flex flex-col gap-1 text-xs text-slate-500">
         <div>Ключів: {lineCount}</div>
         <div className="text-slate-400">
-          Формати: <code className="font-mono">word - 3</code>,{' '}
-          <code className="font-mono">word: 5</code>, <code className="font-mono">word 2</code>,{' '}
-          <code className="font-mono">word</code> (мінімум 1, максимум 2 входження).
+          Формати: <code className="font-mono">word</code> (1–2 входження),{' '}
+          <code className="font-mono">word - 3</code> (рівно 3),{' '}
+          <code className="font-mono">word 5-10</code> (діапазон 5–10). Роздільниками між словом і
+          числом можуть бути <code className="font-mono">-</code>,{' '}
+          <code className="font-mono">:</code> або пробіл.
         </div>
       </div>
     </div>
