@@ -9,7 +9,7 @@ function escapeRegex(input: string): string {
 function buildKeywordRegex(rawKeyword: string): RegExp {
   const normalized = rawKeyword.normalize('NFC').trim();
   const tokens = normalized.split(/\s+/).map(escapeRegex);
-  const body = tokens.join('\\s+');
+  const body = tokens.join('[^\\S\\r\\n]+');
   return new RegExp(`(?<![\\p{L}\\p{N}_])${body}(?![\\p{L}\\p{N}_])`, 'giu');
 }
 

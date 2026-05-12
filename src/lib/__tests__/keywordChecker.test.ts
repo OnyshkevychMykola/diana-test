@@ -57,6 +57,13 @@ describe('checkKeywords — matching', () => {
     expect(findResult(results, 'whitewater rafting').actualCount).toBe(2);
   });
 
+  it('does NOT match multi-word keyword split across a newline', () => {
+    // "cazino\n\nbonus" comes from docx table cells — should not count as "cazino bonus"
+    const text = 'cazino\n\nbonus fara depunere\nReal cazino bonus here.';
+    const results = checkKeywords(text, [def('cazino bonus')]);
+    expect(findResult(results, 'cazino bonus').actualCount).toBe(1);
+  });
+
   it('matches Cyrillic with word boundaries', () => {
     const results = checkKeywords('Туризм це круто. туризму бракує. турист.', [def('туризм')]);
     expect(findResult(results, 'туризм').actualCount).toBe(1);
