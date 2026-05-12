@@ -40,8 +40,16 @@ export interface DuplicateEntry {
   foundInDocuments: string[];
 }
 
+export type IssueKind = 'missing' | 'extra' | 'wrong-level' | 'meaning-mismatch' | 'order';
+
+export interface StructureIssue {
+  kind: IssueKind;
+  originalHeading?: ParsedHeading;
+  comparedHeading?: ParsedHeading;
+  message: string;
+}
+
 export interface StructureDiff {
   documentLabel: string;
-  extra: ParsedHeading[];
-  missing: ParsedHeading[];
+  issues: StructureIssue[];
 }

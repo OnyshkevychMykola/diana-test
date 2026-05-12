@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { TextBlockInput } from '../components/TextBlockInput';
 import { compareStructures } from '../lib/structureCompare';
 import { parseDocument } from '../lib/headingParser';
-import type { StructureDiff } from '../lib/types';
+import type { IssueKind, StructureDiff } from '../lib/types';
 
 const MAX_COMPARED = 4;
 
-const LEVEL_DISPLAY: Record<string, string> = {
-  h2: 'H2',
-  h3: 'H3',
-  h4: 'H4',
+const ISSUE_STYLE: Record<IssueKind, { badge: string; label: string }> = {
+  missing: { badge: 'bg-blue-100 text-blue-800', label: 'Missing' },
+  extra: { badge: 'bg-amber-100 text-amber-800', label: 'Extra' },
+  'wrong-level': { badge: 'bg-red-100 text-red-800', label: 'Wrong level' },
+  'meaning-mismatch': { badge: 'bg-purple-100 text-purple-800', label: 'Meaning' },
+  order: { badge: 'bg-slate-100 text-slate-600', label: 'Order' },
 };
 
 export function StructureComparePage() {
@@ -97,76 +99,38 @@ export function StructureComparePage() {
               Немає текстів для порівняння з розпізнаними заголовками.
             </div>
           )}
-          {diffs.map((diff) => {
-            const isEmpty = diff.extra.length === 0 && diff.missing.length === 0;
-
-            return (
-              <div
-                key={diff.documentLabel}
-                className="rounded-md border border-slate-200 bg-white px-4 py-4"
-              >
-                <div className="mb-3 text-sm font-semibold text-slate-800">
-                  {diff.documentLabel}
-                </div>
-
-                {isEmpty ? (
-                  <div className="text-sm text-emerald-700">
-                    ✓ Структура збігається з оригіналом
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-4">
-                    {diff.extra.length > 0 && (
-                      <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                          Зайві заголовки (яких немає в оригіналі)
-                        </div>
-                        <ul className="flex flex-col gap-1.5">
-                          {diff.extra.map((h) => (
-                            <li
-                              key={h.textLower}
-                              className="flex items-baseline gap-2 text-sm"
-                            >
-                              <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-mono font-medium text-amber-800">
-                                {LEVEL_DISPLAY[h.level] ?? h.level.toUpperCase()}
-                              </span>
-                              <span className="text-slate-800">"{h.text}"</span>
-                              <span className="ml-auto rounded bg-amber-200 px-1.5 py-0.5 text-xs font-bold text-amber-900">
-                                −
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {diff.missing.length > 0 && (
-                      <div>
-                        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
-                          Відсутні заголовки (є в оригіналі)
-                        </div>
-                        <ul className="flex flex-col gap-1.5">
-                          {diff.missing.map((h) => (
-                            <li
-                              key={h.textLower}
-                              className="flex items-baseline gap-2 text-sm"
-                            >
-                              <span className="shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-xs font-mono font-medium text-blue-800">
-                                {LEVEL_DISPLAY[h.level] ?? h.level.toUpperCase()}
-                              </span>
-                              <span className="text-slate-800">"{h.text}"</span>
-                              <span className="ml-auto rounded bg-blue-200 px-1.5 py-0.5 text-xs font-bold text-blue-900">
-                                +
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
+          {diffs.map((diff) => (
+            <div
+              key={diff.documentLabel}
+              className="rounded-md border border-slate-200 bg-white px-4 py-4"
+            >
+              <div className="mb-3 text-sm font-semibold text-slate-800">
+                {diff.documentLabel}
               </div>
-            );
-          })}
+
+              {diff.issues.length === 0 ? (
+                <div className="text-sm text-emerald-700">
+                  ✓ Структура збігається з оригіналом
+                </div>
+              ) : (
+                <ul className="flex flex-col gap-2">
+                  {diff.issues.map((issue, idx) => {
+                    const style = ISSUE_STYLE[issue.kind];
+                    return (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <span
+                          className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${style.badge}`}
+                        >
+                          {style.label}
+                        </span>
+                        <span className="text-slate-700">{issue.message}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          ))}
         </section>
       )}
     </div>
