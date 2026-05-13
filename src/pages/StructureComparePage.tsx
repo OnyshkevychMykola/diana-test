@@ -18,6 +18,7 @@ export function StructureComparePage() {
   const [original, setOriginal] = useState('');
   const [compared, setCompared] = useState<string[]>(['']);
   const [diffs, setDiffs] = useState<StructureDiff[] | null>(null);
+  const [showMeaning, setShowMeaning] = useState(false);
 
   const canCompare =
     original.trim().length > 0 && compared.some((t) => t.trim().length > 0);
@@ -89,6 +90,15 @@ export function StructureComparePage() {
             Додайте хоча б 1 текст для порівняння
           </span>
         )}
+        <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+          <input
+            type="checkbox"
+            checked={showMeaning}
+            onChange={(e) => setShowMeaning(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 accent-slate-700"
+          />
+          Show Meaning
+        </label>
       </div>
 
       {diffs !== null && (
@@ -108,25 +118,27 @@ export function StructureComparePage() {
                 {diff.documentLabel}
               </div>
 
-              {diff.issues.length === 0 ? (
+              {diff.issues.filter((issue) => showMeaning || issue.kind !== 'meaning-mismatch').length === 0 ? (
                 <div className="text-sm text-emerald-700">
                   ✓ Структура збігається з оригіналом
                 </div>
               ) : (
                 <ul className="flex flex-col gap-2">
-                  {diff.issues.map((issue, idx) => {
-                    const style = ISSUE_STYLE[issue.kind];
-                    return (
-                      <li key={idx} className="flex items-start gap-2 text-sm">
-                        <span
-                          className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${style.badge}`}
-                        >
-                          {style.label}
-                        </span>
-                        <span className="text-slate-700">{issue.message}</span>
-                      </li>
-                    );
-                  })}
+                  {diff.issues
+                    .filter((issue) => showMeaning || issue.kind !== 'meaning-mismatch')
+                    .map((issue, idx) => {
+                      const style = ISSUE_STYLE[issue.kind];
+                      return (
+                        <li key={idx} className="flex items-start gap-2 text-sm">
+                          <span
+                            className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-xs font-medium ${style.badge}`}
+                          >
+                            {style.label}
+                          </span>
+                          <span className="text-slate-700">{issue.message}</span>
+                        </li>
+                      );
+                    })}
                 </ul>
               )}
             </div>
