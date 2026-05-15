@@ -4,7 +4,7 @@ import { findDuplicates } from '../lib/headingDuplicates';
 import { parseDocument } from '../lib/headingParser';
 import type { DuplicateEntry, HeadingLevel } from '../lib/types';
 
-const MAX_TEXTS = 5;
+const MAX_TEXTS = 10;
 
 const LEVEL_LABELS: Record<HeadingLevel, string> = {
   'meta-title': 'Meta Title',
@@ -64,6 +64,31 @@ export function HeadingDuplicatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleCheck}
+            disabled={!canCheck}
+            className="rounded-md bg-slate-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            Перевірити
+          </button>
+          {!canCheck && (
+            <span className="text-xs text-slate-500">Додайте щонайменше 2 тексти</span>
+          )}
+        </div>
+        {texts.length < MAX_TEXTS && (
+          <button
+            type="button"
+            onClick={addText}
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+          >
+            + Додати текст
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {texts.map((text, i) => (
           <TextBlockInput
@@ -74,29 +99,6 @@ export function HeadingDuplicatesPage() {
             onRemove={texts.length > 2 ? () => removeText(i) : undefined}
           />
         ))}
-      </div>
-
-      <div className="flex items-center gap-4">
-        {texts.length < MAX_TEXTS && (
-          <button
-            type="button"
-            onClick={addText}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
-          >
-            + Додати текст
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={handleCheck}
-          disabled={!canCheck}
-          className="rounded-md bg-slate-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          Перевірити
-        </button>
-        {!canCheck && (
-          <span className="text-xs text-slate-500">Додайте щонайменше 2 тексти</span>
-        )}
       </div>
 
       {duplicates !== null && (
