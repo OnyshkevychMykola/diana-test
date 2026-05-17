@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TextBlockInput } from '../components/TextBlockInput';
+import { useFileBatchUpload } from '../hooks/useFileBatchUpload';
 import { findDuplicates } from '../lib/headingDuplicates';
 import { parseDocument } from '../lib/headingParser';
 import type { DuplicateEntry, HeadingLevel } from '../lib/types';
@@ -30,6 +31,16 @@ export function HeadingDuplicatesPage() {
 
   const nonEmptyCount = texts.filter((t) => t.trim()).length;
   const canCheck = nonEmptyCount >= 2;
+
+  const { isLoading, uploadErrors, fileInputRef, triggerUpload, handleFiles } =
+    useFileBatchUpload({
+      maxFiles: MAX_TEXTS,
+      onFiles: (parsed) => {
+        const filled = parsed.length < 2 ? [...parsed, ''] : parsed;
+        setTexts(filled);
+        setDuplicates(null);
+      },
+    });
 
   function updateText(index: number, value: string) {
     setTexts((prev) => prev.map((t, i) => (i === index ? value : t)));
@@ -78,16 +89,40 @@ export function HeadingDuplicatesPage() {
             <span className="text-xs text-slate-500">Додайте щонайменше 2 тексти</span>
           )}
         </div>
-        {texts.length < MAX_TEXTS && (
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={addText}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+            onClick={triggerUpload}
+            disabled={isLoading}
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
           >
-            + Додати текст
+            {isLoading ? 'Завантаження…' : 'Завантажити файли'}
           </button>
-        )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".docx,.html,.htm"
+            multiple
+            className="hidden"
+            onChange={handleFiles}
+          />
+          {texts.length < MAX_TEXTS && (
+            <button
+              type="button"
+              onClick={addText}
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
+            >
+              + Додати текст
+            </button>
+          )}
+        </div>
       </div>
+
+      {uploadErrors.length > 0 && (
+        <p className="text-xs text-red-600">
+          Не вдалось обробити: {uploadErrors.join(', ')}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {texts.map((text, i) => (

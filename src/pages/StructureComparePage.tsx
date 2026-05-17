@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TextBlockInput } from '../components/TextBlockInput';
+import { useFileBatchUpload } from '../hooks/useFileBatchUpload';
 import { compareStructures } from '../lib/structureCompare';
 import { parseDocument } from '../lib/headingParser';
 import type { IssueKind, StructureDiff } from '../lib/types';
@@ -22,6 +23,17 @@ export function StructureComparePage() {
 
   const canCompare =
     original.trim().length > 0 && compared.some((t) => t.trim().length > 0);
+
+  // total slots: 1 original + MAX_COMPARED compared
+  const { isLoading, uploadErrors, fileInputRef, triggerUpload, handleFiles } =
+    useFileBatchUpload({
+      maxFiles: MAX_COMPARED + 1,
+      onFiles: ([first, ...rest]) => {
+        setOriginal(first);
+        setCompared(rest.length ? rest : ['']);
+        setDiffs(null);
+      },
+    });
 
   function updateCompared(index: number, value: string) {
     setCompared((prev) => prev.map((t, i) => (i === index ? value : t)));
@@ -79,6 +91,22 @@ export function StructureComparePage() {
         )}
         <button
           type="button"
+          onClick={triggerUpload}
+          disabled={isLoading}
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          {isLoading ? 'Завантаження…' : 'Завантажити файли'}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".docx,.html,.htm"
+          multiple
+          className="hidden"
+          onChange={handleFiles}
+        />
+        <button
+          type="button"
           onClick={handleCompare}
           disabled={!canCompare}
           className="rounded-md bg-slate-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
@@ -100,6 +128,12 @@ export function StructureComparePage() {
           Show Meaning
         </label>
       </div>
+
+      {uploadErrors.length > 0 && (
+        <p className="text-xs text-red-600">
+          Не вдалось обробити: {uploadErrors.join(', ')}
+        </p>
+      )}
 
       {diffs !== null && (
         <section className="flex flex-col gap-4">
