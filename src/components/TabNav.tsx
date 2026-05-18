@@ -1,4 +1,4 @@
-export type Tool = 'keyword' | 'heading-duplicates' | 'structure-compare';
+export type Tool = 'keyword' | 'heading-duplicates' | 'structure-compare' | 'doc-cleaner';
 
 interface Tab {
   id: Tool;
@@ -9,6 +9,7 @@ const TABS: Tab[] = [
   { id: 'keyword', label: 'Keyword Checker' },
   { id: 'heading-duplicates', label: 'Heading Duplicates' },
   { id: 'structure-compare', label: 'Structure Compare' },
+  { id: 'doc-cleaner', label: 'Doc Cleaner' },
 ];
 
 interface TabNavProps {

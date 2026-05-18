@@ -4,6 +4,7 @@ import type { Tool } from './components/TabNav';
 import { KeywordCheckerPage } from './pages/KeywordCheckerPage';
 import { HeadingDuplicatesPage } from './pages/HeadingDuplicatesPage';
 import { StructureComparePage } from './pages/StructureComparePage';
+import { DocCleanerPage } from './pages/DocCleanerPage';
 
 function App() {
   const [activeTool, setActiveTool] = useState<Tool>('keyword');
@@ -21,6 +22,7 @@ function App() {
         {activeTool === 'keyword' && <KeywordCheckerPage />}
         {activeTool === 'heading-duplicates' && <HeadingDuplicatesPage />}
         {activeTool === 'structure-compare' && <StructureComparePage />}
+        {activeTool === 'doc-cleaner' && <DocCleanerPage />}
       </main>
     </div>
   );
